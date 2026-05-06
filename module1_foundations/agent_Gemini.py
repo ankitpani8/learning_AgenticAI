@@ -22,7 +22,7 @@ def run_agent(user_query: str) -> str:
         resp = client.chat.completions.create(
             model=MODEL,
             messages=messages,
-            tools=TOOLS_OPENAI,
+            tools=TOOLS_OPENAI_FORMAT,
         )
         msg = resp.choices[0].message
 

@@ -23,7 +23,7 @@ def run_agent(user_query: str) -> str:
         response = client.messages.create(
             model=MODEL,
             max_tokens=MAX_TOKENS_PER_CALL,
-            tools=TOOLS,
+            tools=TOOLS_CLAUDE_FORMAT,
             messages=messages,
         )
 
