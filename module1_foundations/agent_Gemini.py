@@ -2,7 +2,7 @@
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
-from tools import TOOLS_OPENAI, TOOL_FUNCS  # OpenAI-format schemas
+from tools import TOOLS_OPENAI_FORMAT, TOOL_FUNCS  # OpenAI-format schemas
 
 load_dotenv()
 

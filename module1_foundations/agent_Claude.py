@@ -1,12 +1,13 @@
 import os
 from dotenv import load_dotenv
 from anthropic import Anthropic
-from tools import TOOLS, TOOL_FUNCS
+from tools import TOOLS_CLAUDE_FORMAT, TOOL_FUNCS, TOOLS_OPENAI_FORMAT
 
 load_dotenv()
-client = Anthropic()  # picks up ANTHROPIC_API_KEY automatically
 
+client = Anthropic()  # picks up ANTHROPIC_API_KEY automatically
 MODEL = "claude-sonnet-4-5"
+
 MAX_TURNS = 10           # circuit breaker — prevents infinite loops
 MAX_TOKENS_PER_CALL = 1024
 

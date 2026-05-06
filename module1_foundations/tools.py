@@ -1,56 +1,94 @@
-# agent.py — Gemini version
-import os
-from dotenv import load_dotenv
-from openai import OpenAI
-from tools import TOOLS_OPENAI, TOOL_FUNCS  # OpenAI-format schemas
+import httpx
 
-load_dotenv()
+# --- Tool implementations (the actual Python code) ---
 
-client = OpenAI(
-    api_key=os.environ["GEMINI_API_KEY"],
-    base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
-)
-MODEL = "gemini-2.5-flash"
-MAX_TURNS = 10
-
-
-def run_agent(user_query: str) -> str:
-    messages = [{"role": "user", "content": user_query}]
-
-    for turn in range(MAX_TURNS):
-        print(f"\n--- Turn {turn + 1} ---")
-        resp = client.chat.completions.create(
-            model=MODEL,
-            messages=messages,
-            tools=TOOLS_OPENAI,
-        )
-        msg = resp.choices[0].message
-
-        # No tool calls? We're done.
-        if not msg.tool_calls:
-            return msg.content
-
-        # Append the assistant message (with tool_calls) to history
-        messages.append(msg.model_dump(exclude_none=True))
-
-        # Run each requested tool, append a tool message per call
-        for call in msg.tool_calls:
-            import json
-            args = json.loads(call.function.arguments)
-            print(f"  -> {call.function.name}({args})")
-            func = TOOL_FUNCS.get(call.function.name)
-            result = func(**args) if func else f"unknown tool {call.function.name}"
-            print(f"  <- {str(result)[:120]}")
-            messages.append({
-                "role": "tool",
-                "tool_call_id": call.id,
-                "content": str(result),
-            })
-
-    return "[Hit MAX_TURNS]"
+def calculator(expression: str) -> str:
+    """Evaluate a math expression. Restricted for safety."""
+    allowed = set("0123456789+-*/(). ")
+    if not set(expression) <= allowed:
+        return "Error: only digits and + - * / ( ) . allowed"
+    try:
+        # eval is fine here ONLY because we whitelisted characters above.
+        # Never use raw eval on LLM output in production.
+        return str(eval(expression, {"__builtins__": {}}, {}))
+    except Exception as e:
+        return f"Error: {e}"
 
 
-if __name__ == "__main__":
-    q = "What is 1873 * 47, then fetch https://example.com and tell me what's on it."
-    print("USER:", q)
-    print("\nAGENT:", run_agent(q))
+def fetch_url(url: str) -> str:
+    """Fetch a URL and return the first 2000 chars of text."""
+    try:
+        r = httpx.get(url, timeout=10, follow_redirects=True)
+        r.raise_for_status()
+        return r.text[:2000]
+    except Exception as e:
+        return f"Error fetching {url}: {e}"
+
+
+# --- Tool schemas (what the model sees) ---
+
+TOOLS_CLAUDE_FORMAT = [
+    {
+        "name": "calculator",
+        "description": "Evaluate a basic math expression. Use for any arithmetic.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "expression": {
+                    "type": "string",
+                    "description": "Math expression like '23 * (4 + 7)'",
+                }
+            },
+            "required": ["expression"],
+        },
+    },
+    {
+        "name": "fetch_url",
+        "description": "Fetch the contents of a web page. Returns first 2000 chars.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "url": {"type": "string", "description": "Full URL including https://"}
+            },
+            "required": ["url"],
+        },
+    },
+]
+
+TOOLS_OPENAI_FORMAT = [
+    {
+        "type": "function",
+        "function": {
+            "name": "calculator",
+            "description": "Evaluate a basic math expression.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "expression": {"type": "string"},
+                },
+                "required": ["expression"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "fetch_url",
+            "description": "Fetch a web page; returns first 2000 chars.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "url": {"type": "string"},
+                },
+                "required": ["url"],
+            },
+        },
+    },
+]
+
+# Dispatch table — maps tool name to the function that runs it
+TOOL_FUNCS = {
+    "calculator": calculator,
+    "fetch_url": fetch_url,
+}
+
