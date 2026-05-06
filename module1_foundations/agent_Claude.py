@@ -76,6 +76,6 @@ def run_agent(user_query: str) -> str:
 
 
 if __name__ == "__main__":
-    query = "What is 1873 * 47, and then fetch https://example.com and tell me what's on it."
+    query = "What is 1873 * 47, and then fetch https://youtube.com and tell me what's on it."
     print(f"USER: {query}")
     print(f"\nAGENT: {run_agent(query)}")
