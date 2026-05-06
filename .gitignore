@@ -5,6 +5,7 @@ env/
 
 # Secrets — NEVER commit
 .env
+.env.example
 .env.local
 *.key
 *.pem
