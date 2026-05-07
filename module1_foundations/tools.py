@@ -1,3 +1,4 @@
+import os
 import httpx
 
 # --- Tool implementations (the actual Python code) ---
@@ -23,6 +24,18 @@ def fetch_url(url: str) -> str:
         return r.text[:2000]
     except Exception as e:
         return f"Error fetching {url}: {e}"
+
+
+def read_file(filename: str) -> str:
+    """Read a local text file and return its contents."""
+    normalized = os.path.normpath(filename)
+    if os.path.isabs(filename) or normalized.startswith(".."):
+        return "Error: path must be a relative file name in the current directory"
+    try:
+        with open(filename, "r", encoding="utf-8") as f:
+            return f.read()
+    except Exception as e:
+        return f"Error reading {filename}: {e}"
 
 
 # --- Tool schemas (what the model sees) ---
@@ -84,11 +97,29 @@ TOOLS_OPENAI_FORMAT = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "read_file",
+            "description": "Read a local text file, return its contents. The file must be in the current directory.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "filename": {
+                        "type": "string",
+                        "description": "Relative path to a local file in the current directory",
+                    },
+                },
+                "required": ["filename"],
+            },
+        },
+    },
 ]
 
 # Dispatch table — maps tool name to the function that runs it
 TOOL_FUNCS = {
     "calculator": calculator,
     "fetch_url": fetch_url,
+    "read_file": read_file,
 }
 
