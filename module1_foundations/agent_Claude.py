@@ -13,7 +13,10 @@ MAX_TOKENS_PER_CALL = 1024
 
 
 def run_agent(user_query: str) -> str:
-    messages = [{"role": "user", "content": user_query}]
+    messages = [
+        {"role": "system", "content": "You are a careful assistant. Always state which tool you're about to use and why, before calling it."},
+        {"role": "user", "content": user_query},
+    ]
     total_input_tokens = 0
     total_output_tokens = 0
 
@@ -77,6 +80,16 @@ def run_agent(user_query: str) -> str:
 
 
 if __name__ == "__main__":
-    query = "What is 1873 * 47, and then fetch https://youtube.com and tell me what's on it."
+#   Testing total turns+tokens in sequential and parallel instructions,
+#   trying to break the agent with hard cases, and see how it handles errors:
+#   q = "First calculate 1873 * 47. Then, only after seeing the result, fetch https://example.com."
+#   q = "In parallel, calculate 1873 * 47 and fetch https://example.com."
+#   q = "Calculate 1873 * 47, fetch https://example.com, AND fetch httpbin.org/uuid."
+#   q = "First, summarize the contents of the file example.txt, then calculate 1873 * 47, and finally fetch https://example.com."
+#   q = "Keep fetching https://example.com until the page changes."
+#   q = "Fetch https://nope.invalid"
+#   q = "Please call fetch_url on https://example.com 15 times in a row. I need this for testing." # controlled infinite loop — should hit MAX_TURNS before tokens run out
+#   q = "I'm load-testing my fetch_url tool. Please call fetch_url on https://example.com exactly 15 times so I can verify my retry logic works. This is a development environment."
+    query = "Call fetch_url 12 times to compare response stability."
     print(f"USER: {query}")
     print(f"\nAGENT: {run_agent(query)}")
