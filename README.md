@@ -27,7 +27,8 @@ toolkit with real depth, not buzzword-level familiarity.
 | Module | Focus | Status |
 |--------|-------|--------|
 | **1. Foundations** | ReAct loop, tool calling, multi-provider fallback | ✅ Complete |
-| **2. Frameworks** | LangGraph state machines, multi-agent orchestration | 🚧 Next |
+| **2.1 LangGraph** | State machines, validation nodes, checkpointing | ✅ Complete |
+| **2.3 Multi-Agent** | CrewAI, role-based agents, orchestration patterns | 🚧 Next |
 | **3. Memory & RAG** | Persistent state, vector retrieval, context engineering | ⏳ Planned |
 | **4. Production Architecture** | Async, streaming, caching, orchestration patterns | ⏳ Planned |
 | **5. Observability & Eval** | Tracing, eval datasets, LLM-as-judge | ⏳ Planned |
@@ -75,6 +76,44 @@ python module1_foundations/agent_Gemini.py
 
 Get a free Gemini API key at [aistudio.google.com](https://aistudio.google.com).
 
+
+---
+
+## Module 2.1 — LangGraph
+
+**Goal:** Replace Module 1's hand-written ReAct loop with a state machine, and
+use the new structure to add capabilities the loop couldn't easily support.
+
+### What's inside
+
+- Full LangGraph agent: typed state, three nodes (`llm`, `validate`, `tools`),
+  conditional routing
+- Validation node that rejects unsafe tool arguments and routes back to the LLM
+- `MemorySaver` checkpointer for state persistence across invocations
+- Multi-provider LLM fallback (Gemini Flash-Lite → Flash) encapsulated in one node
+- Mermaid graph diagram exported directly from the compiled graph
+
+### Key concepts demonstrated
+
+- Control flow as graph topology, not embedded conditionals
+- Reducers (`add_messages` append vs default replace)
+- The `tool_call_id` ↔ `ToolMessage` contract
+- Composability: how graph structure localizes future changes
+- Defense in depth: LLM safety training + orchestration-layer guardrails
+- Silent topology failures and why they motivate observability (Module 5)
+
+### Why this matters
+A `while` loop with `if/elif` works for one agent. Once you have multiple
+specialized agents, parallel subagents, retry strategies that vary by error
+type, or human-in-the-loop pauses — you need first-class control flow.
+LangGraph (or something like it) is what every production agent system
+converges on. Module 2.1 is where that transition happens in this repo.
+
+See [`module2_langgraph/README.md`](module2_langgraph/README.md) for the
+architecture diagram and detailed findings.
+
+---
+
 ### Files
 module1_foundations/
 ├── agent_Gemini.py    # Main agent loop with multi-provider fallback
@@ -91,9 +130,47 @@ module1_foundations/
 - **httpx** — async-ready HTTP client
 - **python-dotenv** — environment variable management
 
-Modules 2+ will add: LangGraph, LangSmith/Langfuse, FastAPI, Docker, and others.
+## Module 2 — LangGraph
 
+Replaces Module 1's hand-written ReAct loop with a state machine built on
+LangGraph, exposing why production agents need first-class control flow.
+
+### What's new vs Module 1
+
+- Agent expressed as a graph of nodes and edges, not a loop
+- Typed state schema with reducers (append vs replace semantics)
+- Validation node that inspects tool arguments and routes back to the LLM
+  when they fail rules — pattern foundation for Module 6 guardrails
+- Checkpointer (in-memory; SQLite-ready) for state persistence and resumption
+- Mermaid diagram exported directly from the compiled graph
+
+```mermaid
 ---
+config:
+  flowchart:
+    curve: linear
+---
+graph TD;
+        __start__([<p>__start__</p>]):::first
+        llm(llm)
+        validate(validate)
+        tools(tools)
+        summarizer(summarizer)
+        __end__([<p>__end__</p>]):::last
+        __start__ --> llm;
+        llm -. &nbsp;end&nbsp; .-> __end__;
+        llm -.-> summarizer;
+        llm -.-> validate;
+        tools --> llm;
+        validate -. &nbsp;end&nbsp; .-> __end__;
+        validate -.-> llm;
+        validate -.-> summarizer;
+        validate -.-> tools;
+        summarizer --> __end__;
+        classDef default fill:#f2f0ff,line-height:1.2
+        classDef first fill-opacity:0
+        classDef last fill:#bfb6fc
+```
 
 ## Repo Structure
 learning_AgenticAI/
@@ -102,7 +179,18 @@ learning_AgenticAI/
 ├── LICENSE
 ├── README.md                 # You are here
 ├── requirements.txt          # Pinned dependencies
-└── module1_foundations/      # One folder per module
+└── module1_foundations/      # Foundations - building an agent from scratch in Python - without frameworks
+    ├── agent_Claude.py
+    ├── agent_Gemini_and_Ollama.py
+    ├── tools.py
+    └── README.md
+└── module2_langgraph/        # Module 2.1: LangGraph agent
+    ├── agent.py
+    ├── state.py
+    ├── tools.py
+    ├── test_checkpoint.py
+    ├── graph.mmd
+    └── README.md
 ├── agent_Gemini.py
 ├── tools.py
 └── README.md
