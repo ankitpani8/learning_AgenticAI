@@ -112,15 +112,6 @@ converges on. Module 2.1 is where that transition happens in this repo.
 See [`module2_langgraph/README.md`](module2_langgraph/README.md) for the
 architecture diagram and detailed findings.
 
----
-
-### Files
-module1_foundations/
-├── agent_Gemini.py    # Main agent loop with multi-provider fallback
-├── tools.py           # Tool implementations and schemas
-└── README.md          # Module-specific notes and findings
-
----
 
 ## Tech Stack
 
