@@ -27,13 +27,85 @@ toolkit with real depth, not buzzword-level familiarity.
 | Module | Focus | Status |
 |--------|-------|--------|
 | **1. Foundations** | ReAct loop, tool calling, multi-provider fallback | ✅ Complete |
-| **2.1 LangGraph** | State machines, validation nodes, checkpointing | ✅ Complete |
-| **2.3 Multi-Agent** | CrewAI, role-based agents, orchestration patterns | 🚧 Next |
-| **3. Memory & RAG** | Persistent state, vector retrieval, context engineering | ⏳ Planned |
-| **4. Production Architecture** | Async, streaming, caching, orchestration patterns | ⏳ Planned |
-| **5. Observability & Eval** | Tracing, eval datasets, LLM-as-judge | ⏳ Planned |
-| **6. Governance & Guardrails** | Prompt injection, output validation, OWASP LLM Top 10 | ⏳ Planned |
-| **7. Deployment & Capstone** | Docker, K8s, end-to-end production agent | ⏳ Planned |
+| **2. LangGraph** | State machines, validation nodes, checkpointing | ✅ Complete |
+| **3. Multi-Agent** | CrewAI, LangGraph multi-agent, role-based selection | ✅ Complete |
+| **4. Memory & RAG** | Persistent state, vector retrieval, context engineering | 🚧 Next |
+| **5. Production Architecture** | Async, streaming, caching, orchestration patterns | ⏳ Planned |
+| **6. Observability & Eval** | Tracing, eval datasets, LLM-as-judge | ⏳ Planned |
+| **7. Governance & Guardrails** | Prompt injection, output validation, OWASP LLM Top 10 | ⏳ Planned |
+| **8. Deployment & Capstone** | Docker, K8s, end-to-end production agent | ⏳ Planned |
+
+---
+
+## Tech Stack
+
+- **[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/)**
+- **OpenAI SDK** (used as the OpenAI-compatible client for any provider)
+- **Google Gemini API** — primary LLM provider (free tier)
+- **Ollama qwen2.5:1.5b** — Local Small LM (free)
+- **httpx** — async-ready HTTP client
+- **python-dotenv** — environment variable management
+
+Get a free-tier Gemini API key at [aistudio.google.com](https://aistudio.google.com).
+Download Ollama at: [ollama.com](https://ollama.com/download).
+Anthropic is included in the provider chain at lower priority. To use Claude, set ANTHROPIC_API_KEY (~/.env) and either reorder ROLE_PREFERENCES to prefer it or run with Gemini disabled (~/lib/providers.py).
+
+## Repo Structure
+learning_AgenticAI/
+├── .env.example              # Template for required environment variables
+├── .gitignore
+├── LICENSE
+├── README.md                 # You are here
+├── requirements.txt          # Pinned dependencies
+└── module1_foundations/      # Foundations - building an agent from scratch in Python - without frameworks
+    ├── agent_Claude.py
+    ├── agent_Gemini_and_Ollama.py
+    ├── tools.py
+    └── README.md
+└── module2_langgraph/        # Module 2: LangGraph agent
+    ├── agent.py
+    ├── state.py
+    ├── tools.py
+    ├── test_checkpoint.py
+    ├── example.txt
+    ├── graph.mmd
+    └── README.md
+└── module3_crewai/           # Module 3: Multi-agent frameworks, focusing on CrewAI
+    ├── crew.py
+    ├── crew_in_langgraph.py
+    ├── tools.py
+    ├── graph.mmd
+    └── README.md
+
+---
+
+### Run it yourself
+
+```bash
+git clone https://github.com/ankitpani8/learning_AgenticAI.git
+cd learning_AgenticAI
+py -3.11 -m venv .venv
+.venv\Scripts\activate              # Windows
+# source .venv/bin/activate         # macOS/Linux
+pip install -r requirements.txt
+cp .env.example .env                # then add your GEMINI_API_KEY
+python module1_foundations/agent_Gemini.py #as an example. Run any files by going to the location as per the repo structure
+
+```
+---
+
+## Architecture: Role-Based Model Selection
+
+Every agent in this repo requests models by **role** (`heavy`, `light`, `critic`)
+rather than by name. A startup health-check protocol pings each provider in the
+role's preference chain and binds the first one that responds. This:
+
+- Fails fast on quota/auth/network issues before agents run
+- Decouples agent code from provider choice (policy is in `lib/providers.py`)
+- Lets the critic role prefer a local Ollama model — demonstrating that critics
+  shouldn't cost more than what they're critiquing (a key multi-agent pattern)
+
+See [`lib/providers.py`](lib/providers.py) for the implementation.
 
 ---
 
@@ -61,25 +133,7 @@ framework abstracts away.
 - Model self-imposed refusals (small models over-refuse repetitive requests)
 - Why hosted APIs usually beat self-hosted models for low-end hardware
 
-### Run it yourself
-
-```bash
-git clone https://github.com/ankitpani8/learning_AgenticAI.git
-cd learning_AgenticAI
-python -m venv .venv
-.venv\Scripts\activate              # Windows
-# source .venv/bin/activate         # macOS/Linux
-pip install -r requirements.txt
-cp .env.example .env                # then add your GEMINI_API_KEY
-python module1_foundations/agent_Gemini.py
-```
-
-Get a free Gemini API key at [aistudio.google.com](https://aistudio.google.com).
-
-
----
-
-## Module 2.1 — LangGraph
+## Module 2 — LangGraph
 
 **Goal:** Replace Module 1's hand-written ReAct loop with a state machine, and
 use the new structure to add capabilities the loop couldn't easily support.
@@ -107,24 +161,10 @@ A `while` loop with `if/elif` works for one agent. Once you have multiple
 specialized agents, parallel subagents, retry strategies that vary by error
 type, or human-in-the-loop pauses — you need first-class control flow.
 LangGraph (or something like it) is what every production agent system
-converges on. Module 2.1 is where that transition happens in this repo.
+converges on. Module 2 is where that transition happens in this repo.
 
 See [`module2_langgraph/README.md`](module2_langgraph/README.md) for the
 architecture diagram and detailed findings.
-
-
-## Tech Stack
-
-- **Python 3.11+**
-- **OpenAI SDK** (used as the OpenAI-compatible client for any provider)
-- **Google Gemini API** — primary LLM provider (free tier)
-- **httpx** — async-ready HTTP client
-- **python-dotenv** — environment variable management
-
-## Module 2 — LangGraph
-
-Replaces Module 1's hand-written ReAct loop with a state machine built on
-LangGraph, exposing why production agents need first-class control flow.
 
 ### What's new vs Module 1
 
@@ -162,31 +202,43 @@ graph TD;
         classDef first fill-opacity:0
         classDef last fill:#bfb6fc
 ```
+## Architecture: Role-Based Model Selection
 
-## Repo Structure
-learning_AgenticAI/
-├── .env.example              # Template for required environment variables
-├── .gitignore
-├── LICENSE
-├── README.md                 # You are here
-├── requirements.txt          # Pinned dependencies
-└── module1_foundations/      # Foundations - building an agent from scratch in Python - without frameworks
-    ├── agent_Claude.py
-    ├── agent_Gemini_and_Ollama.py
-    ├── tools.py
-    └── README.md
-└── module2_langgraph/        # Module 2.1: LangGraph agent
-    ├── agent.py
-    ├── state.py
-    ├── tools.py
-    ├── test_checkpoint.py
-    ├── graph.mmd
-    └── README.md
-├── agent_Gemini.py
-├── tools.py
-└── README.md
+Every agent in this repo requests models by **role** (`heavy`, `light`,
+`critic`) rather than by name. A startup health-check protocol pings each
+provider in the role's preference chain and binds the first one that
+responds. This:
 
----
+- Fails fast on quota/auth/network issues before agents run
+- Decouples agent code from provider choice (policy is in `lib/providers.py`)
+- Lets the critic role prefer a local Ollama model — demonstrating that
+  critics shouldn't cost more than what they're critiquing
+
+Supported providers: Gemini (primary), Ollama (local), Anthropic (optional
+backup). See [`lib/providers.py`](lib/providers.py).
+
+## Module 3 — Multi-Agent Systems
+
+**Goal:** Implement four multi-agent topologies as separate scripts and
+develop opinions on when each pattern earns its keep.
+
+### What's inside
+- Sequential pipeline with critic loop, in both CrewAI and LangGraph
+- Hierarchical dispatch with parallel workers (`Send` API) and synthesis
+- Router + specialist experts with scoped tools per specialist
+- Side-by-side framework comparison (CrewAI vs LangGraph)
+- Empirical measurement of the multi-agent token tax
+
+### Key concepts demonstrated
+- Topology and role policy as orthogonal design dimensions
+- The `Send` API for dynamic parallel dispatch in LangGraph
+- Capability scoping as a security pattern (not just a cost pattern)
+- Hallucination by substitution as a failure mode of small manager models
+- Why hierarchical loses on small N and only wins on large N
+
+See [`module3_multiagent/README.md`](module3_multiagent/README.md) for
+diagrams and findings.
+
 
 ## Notes for Visitors
 

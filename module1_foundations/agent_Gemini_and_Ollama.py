@@ -26,9 +26,9 @@ PROVIDERS = [
         "model": "gemini-2.5-flash",
     },
     {
-        "name": "ollama-qwen-3b",
+        "name": "ollama-qwen-1.5b",
         "client": OpenAI(base_url="http://localhost:11434/v1", api_key="ollama"),
-        "model": "qwen2.5:3b",
+        "model": "qwen2.5:1.5b",
     },
 ]
 
@@ -64,7 +64,7 @@ def call_with_fallback(messages, tools, max_retries=2):
 # MODEL = "gemini-2.5-flash-lite"
 
 # client = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
-# MODEL = "qwen2.5:7b"
+# MODEL = "qwen2.5:1.5b"
 
 MAX_TURNS = 10
 

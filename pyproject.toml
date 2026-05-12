@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "learning-agentic-ai"
+version = "0.1.0"
+description = "Hands-on agentic AI curriculum demonstrating production patterns."
+requires-python = ">=3.11"
+readme = "README.md"
+license = { file = "LICENSE" }
+
+[tool.setuptools.packages.find]
+include = ["lib*"]

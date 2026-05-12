@@ -11,56 +11,13 @@ from langchain_ollama import ChatOllama
 from state import AgentState
 from tools import ALL_TOOLS
 
-import time
-from google.api_core.exceptions import ResourceExhausted
-
 load_dotenv()
 
-def call_llm_with_fallback(messages, max_retries=2):
-    """Try each provider in order. RateLimit -> next provider. Other errors -> retry then next."""
-    last_error = None
-    for name, llm in PROVIDERS:
-        for attempt in range(max_retries):
-            try:
-                print(f"  [provider] {name} (attempt {attempt + 1})")
-                return llm.invoke(messages), name
-            except ResourceExhausted as e:
-                # 429 from Gemini — quota hit, no point retrying same provider
-                print(f"  [rate-limited] {name}: skipping to next provider")
-                last_error = e
-                break
-            except Exception as e:
-                # Generic transient error — back off and retry same provider
-                wait = 2 ** attempt
-                print(f"  [error] {name}: {type(e).__name__} — retry in {wait}s")
-                last_error = e
-                time.sleep(wait)
-    raise RuntimeError(f"All providers exhausted. Last error: {last_error}")
+from lib.providers import select_all_models
 
-
-# --- LLM setup ------------------------------------------------------------
-
-# Each provider is a (name, llm) tuple. Tools are bound at the end.
-def _build_providers():
-    primary = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash-lite",
-        google_api_key=os.environ["GEMINI_API_KEY"],
-        temperature=0,
-    )
-    fallback = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
-        google_api_key=os.environ["GEMINI_API_KEY"],
-        temperature=0,
-    )
-    local = ChatOllama(model="qwen2.5:1:5", temperature=0)
-    
-    return [
-        ("gemini-flash-lite", primary.bind_tools(ALL_TOOLS)),
-        ("gemini-flash",      fallback.bind_tools(ALL_TOOLS)),
-        ("ollama-qwen-3b",    local.bind_tools(ALL_TOOLS)),
-    ]
-
-PROVIDERS = _build_providers()
+# Run the selection protocol once at startup. Fail fast if no provider works.
+SELECTIONS = select_all_models(roles=["heavy"])
+llm = SELECTIONS["heavy"].to_langchain(temperature=0).bind_tools(ALL_TOOLS)
 
 # Tool name -> function lookup
 TOOLS_BY_NAME = {t.name: t for t in ALL_TOOLS}
@@ -76,16 +33,15 @@ SYSTEM_PROMPT = (
 # --- Nodes ----------------------------------------------------------------
 
 def llm_node(state: AgentState) -> dict:
-    """Call the LLM with the full message history, with provider fallback."""
+    """Call the bound LLM with the full message history."""
     print(f"\n--- LLM (turn {state['turn_count'] + 1}) ---")
-    response, provider_used = call_llm_with_fallback(state["messages"])
+    response = llm.invoke(state["messages"])
     if response.tool_calls:
         for tc in response.tool_calls:
-            print(f"  [{provider_used}] proposed: {tc['name']}({tc['args']})")
+            print(f"  proposed: {tc['name']}({tc['args']})")
     else:
-        print(f"  [{provider_used}] final: {response.content[:100]}")
+        print(f"  final answer (first 100 chars): {response.content[:100]}")
     return {"messages": [response]}
-
 
 def validate_node(state: AgentState) -> dict:
     """Inspect the LLM's proposed tool calls before execution.
