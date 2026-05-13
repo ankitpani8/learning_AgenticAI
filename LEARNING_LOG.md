@@ -91,3 +91,57 @@ preserved deliberately for the next person (or future me) to learn from.
   Router category overlap. Whenever you add a category, you create new
   boundary cases with existing ones. Few-shot examples in the router prompt
   are the fix.
+
+## Module 4 — Memory and RAG
+
+- **When do I reach for RAG vs fine-tuning vs long context?**
+  RAG when knowledge changes often, is large, or has access controls.
+  Fine-tuning when you need a specific style/format or are at volume where
+  prompt cost matters. Long context for one-off tasks where the document
+  fits and you don't need it again.
+
+- **Why use a separate embedding model from the chat model?**
+  Embedding and generation are different architectures (encoder vs decoder),
+  different sizes (20M–7B vs 1B–500B params), and different cost profiles.
+  Chat models can't produce good embeddings; using them for embedding wastes
+  10-100x the cost for worse quality.
+
+- **Why is content-only hashing insufficient for incremental indexing?**
+  Hashes capture source data but miss indexing-config changes. Change
+  CHUNK_SIZE or swap embedding models, content hash stays the same, but
+  stored chunks are stale. Production hashes the (content + chunk_size +
+  embed_model) tuple.
+
+- **What's different between RAG indexing and episodic memory storage?**
+  RAG sources are external, mutable, lifecycle-managed (detect/add/update/
+  delete). Episodes are internal, immutable, append-only with eviction
+  policies. Same vector store, very different write semantics.
+
+- **Why did the LLM extractor save "I love pineapple on pizza" as a diet?**
+  Hallucination by substitution. Small models, given an extraction task
+  with a fixed schema, will force an ill-fitting input into a schema-shaped
+  answer rather than return empty. Mitigation: deterministic validation
+  downstream of LLM extraction. Smartness suggests, dumbness validates.
+
+- **Why did the episodic summarizer say "Alimentaria in Belem, Brazil"?**
+  The summarizer is a 1.5B model trying to compress dialogue. It lost
+  speaker attribution (user vs assistant) and hallucinated geography.
+  Production summarizers use stronger models and structured templates that
+  force "USER: ... ASSISTANT: ..." attribution.
+
+- **Why is hard refusal when context is empty better than "answer carefully"?**
+  Small models especially have weak refusal habits — they'd rather guess
+  than say "I don't know." The factual-refusal pattern (classify the query,
+  refuse if factual + no context) is deterministic and costs one cheap LLM
+  call. It's the highest-ROI hallucination guardrail in production.
+
+- **Why does memory rot compound across sessions?**
+  One bad write becomes many bad retrievals. Bad episodes get summarized
+  into more bad episodes. The fix isn't better prompts — it's user-visible
+  memory inspection. Every production assistant (ChatGPT, Claude, Letta)
+  exposes memory so users can audit and correct.
+
+- **What's the role abstraction's payoff when all roles map to the same model?**
+  Even when "heavy" and "light" both bind to qwen2.5:1.5b (because that's
+  what fits in 7GB RAM), the indirection costs nothing at runtime and lets
+  you change policy in one place when you move to a better machine.

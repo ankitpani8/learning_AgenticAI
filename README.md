@@ -29,7 +29,7 @@ toolkit with real depth, not buzzword-level familiarity.
 | **1. Foundations** | ReAct loop, tool calling, multi-provider fallback | ✅ Complete |
 | **2. LangGraph** | State machines, validation nodes, checkpointing | ✅ Complete |
 | **3. Multi-Agent** | CrewAI, LangGraph multi-agent, role-based selection | ✅ Complete |
-| **4. Memory & RAG** | Persistent state, vector retrieval, context engineering | 🚧 Next |
+| **4. Memory & RAG** | Persistent state, vector retrieval, context engineering | 🚧 Ongoing |
 | **5. Production Architecture** | Async, streaming, caching, orchestration patterns | ⏳ Planned |
 | **6. Observability & Eval** | Tracing, eval datasets, LLM-as-judge | ⏳ Planned |
 | **7. Governance & Guardrails** | Prompt injection, output validation, OWASP LLM Top 10 | ⏳ Planned |
@@ -62,7 +62,7 @@ learning_AgenticAI/
     ├── agent_Gemini_and_Ollama.py
     ├── tools.py
     └── README.md
-└── module2_langgraph/        # Module 2: LangGraph agent
+└── module2_langgraph/        # Module 2: LangGraph framework
     ├── agent.py
     ├── state.py
     ├── tools.py
@@ -70,7 +70,7 @@ learning_AgenticAI/
     ├── example.txt
     ├── graph.mmd
     └── README.md
-└── module3_crewai/           # Module 3: Multi-agent frameworks, focusing on CrewAI
+└── module3_multiagent/           # Module 3: Multi-agent frameworks, using :anggraph (mainly) and CrewAI
     ├── crew.py
     ├── crew_in_langgraph.py
     ├── tools.py
@@ -239,6 +239,29 @@ develop opinions on when each pattern earns its keep.
 See [`module3_multiagent/README.md`](module3_multiagent/README.md) for
 diagrams and findings.
 
+## Module 4 — Memory and RAG
+
+**Goal:** Build a personal assistant with three memory layers and a knowledge
+base that incrementally reindexes itself, while encountering and naming the
+failure modes of long-running memory systems.
+
+### What's inside
+- Content-hash incremental RAG indexing over a markdown corpus
+- Three memory layers: conversation (LangGraph), semantic facts (SQLite),
+  episodic summaries (ChromaDB)
+- LLM-based fact extraction with deterministic validation downstream
+- Factual-refusal guardrail when no context is available
+- User-visible memory inspection for auditability
+
+### Key concepts demonstrated
+- Memory vs RAG (different lifecycle semantics, different storage)
+- The smartness/dumbness split: LLM extracts, deterministic code validates
+- Hallucination by substitution at every layer (extractor, summarizer)
+- Memory rot and why memory inspection is essential UX
+- The factual-refusal pattern as the cheapest hallucination guardrail
+
+See [`module4_memory_rag/README.md`](module4_memory_rag/README.md) for
+the architecture and findings.
 
 ## Notes for Visitors
 
