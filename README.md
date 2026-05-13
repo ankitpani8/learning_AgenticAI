@@ -29,8 +29,8 @@ toolkit with real depth, not buzzword-level familiarity.
 | **1. Foundations** | ReAct loop, tool calling, multi-provider fallback | ✅ Complete |
 | **2. LangGraph** | State machines, validation nodes, checkpointing | ✅ Complete |
 | **3. Multi-Agent** | CrewAI, LangGraph multi-agent, role-based selection | ✅ Complete |
-| **4. Memory & RAG** | Persistent state, vector retrieval, context engineering | 🚧 Ongoing |
-| **5. Production Architecture** | Async, streaming, caching, orchestration patterns | ⏳ Planned |
+| **4. Memory & RAG** | Persistent state, vector retrieval, context engineering | ✅ Complete  |
+| **5. Production Architecture** | Async, streaming, caching, orchestration patterns | 🚧 Ongoing |
 | **6. Observability & Eval** | Tracing, eval datasets, LLM-as-judge | ⏳ Planned |
 | **7. Governance & Guardrails** | Prompt injection, output validation, OWASP LLM Top 10 | ⏳ Planned |
 | **8. Deployment & Capstone** | Docker, K8s, end-to-end production agent | ⏳ Planned |
