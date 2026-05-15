@@ -58,6 +58,9 @@ learning_AgenticAI/
 ├── .gitignore
 ├── LICENSE
 ├── README.md                 # You are here
+└── lib/                      # setting up automatic provider fallback policy and importability of the repo
+    ├── __init__.py           
+    └── providers.py
 ├── requirements.txt          # Pinned dependencies
 └── module1_foundations/      # Foundations - building an agent from scratch in Python - without frameworks
     ├── agent_Claude.py
@@ -73,10 +76,22 @@ learning_AgenticAI/
     ├── graph.mmd
     └── README.md
 └── module3_multiagent/           # Module 3: Multi-agent frameworks, using :anggraph (mainly) and CrewAI
-    ├── crew.py
-    ├── crew_in_langgraph.py
+    ├── 01_sequence_plus_critic_loop_CrewAI.py
+    ├── 02_sequence_plus_critic_loop_langgraph.py
+    ├── 03_hierarchical_langgraph.py
+    ├── 03_hierarchical_graph.mmd    
+    ├── 04_router_experts_langgraph.py
+    ├── 04_router_experts_graph.mmd    
     ├── tools.py
-    ├── graph.mmd
+    └── README.md
+└── module4_memory_rag/
+    ├── knowledge_base/              -- markdown corpus for RAG
+    ├── 01_indexer.py                -- content-hash incremental indexer + retrieval
+    ├── 02_memory_stores.py          -- semantic (SQLite) + episodic (ChromaDB) memory
+    ├── 03_agent_langgraph.py        -- the three-layer memory agent
+    ├── 04_test_episodic.py          -- 3-session test: write in session 1, recall in 3
+    ├── 05_test_rag.py               -- RAG retrieval + factual refusal test
+    ├── 06_inspect_memory.py         -- audit what the agent currently remembers
     └── README.md
 └── module5_production/
     ├── 01_cache.py             -- two-layer cache + hit/miss counters
