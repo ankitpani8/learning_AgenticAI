@@ -51,6 +51,8 @@ Download Ollama at: [ollama.com](https://ollama.com/download).
 Anthropic is included in the provider chain at lower priority. To use Claude, set ANTHROPIC_API_KEY (~/.env) and either reorder ROLE_PREFERENCES to prefer it or run with Gemini disabled (~/lib/providers.py).
 
 ## Repo Structure
+
+```
 learning_AgenticAI/
 ├── .env.example              # Template for required environment variables
 ├── .gitignore
@@ -76,7 +78,16 @@ learning_AgenticAI/
     ├── tools.py
     ├── graph.mmd
     └── README.md
+└── module5_production/
+    ├── 01_cache.py             -- two-layer cache + hit/miss counters
+    ├── 02_retry.py             -- tenacity retry with exception classification
+    ├── 03_telemetry.py         -- per-request structured logging
+    ├── 04_agent.py             -- async RAG agent, token budget, cache integration
+    ├── 05_service.py           -- FastAPI app with all endpoints + rate limiter
+    ├── 06_load_test.py         -- concurrent load harness with cache clearing
+    └── README.md
 
+```
 ---
 
 ### Run it yourself
@@ -261,6 +272,32 @@ failure modes of long-running memory systems.
 - The factual-refusal pattern as the cheapest hallucination guardrail
 
 See [`module4_memory_rag/README.md`](module4_memory_rag/README.md) for
+the architecture and findings.
+
+## Module 5 — Production Architecture
+
+**Goal:** Wrap Module 4's RAG agent in a production-style service shell —
+the patterns that turn lab-grade code into something deployable.
+
+### What's inside
+- Async FastAPI service with full `async`/`await` stack
+- Streaming endpoint via Server-Sent Events
+- Two-layer cache (exact-match + semantic) with admin clear endpoint
+- Tenacity retry policy with exception classification
+- Per-request telemetry as JSON lines
+- Per-IP rate limiting (slowapi)
+- Token-budget cap with mid-run abort
+- Concurrent load test harness with proper cache hygiene
+
+### Key concepts demonstrated
+- Async is necessary but not sufficient — backend must support concurrency
+- The agent / service distinction (logic vs deployment shell)
+- p50 vs p95 vs p99 — why production SLOs target the tail
+- Cache contamination as a benchmarking pitfall
+- Provider fallback as a defense against both runtime and config errors
+- Rate limiting as both client-side reality and server-side responsibility
+
+See [`module5_production/README.md`](module5_production/README.md) for
 the architecture and findings.
 
 ## Notes for Visitors

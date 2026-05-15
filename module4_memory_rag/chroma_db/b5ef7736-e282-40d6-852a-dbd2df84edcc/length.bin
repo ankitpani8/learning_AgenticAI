@@ -1,1 +1,10 @@
-invalid type: string " Use them on all\nfunction signatures. `from typing import Optional, List` covers most cases.\n\n## Dependency pinning\nPin dependencies in `requirements.txt` using `pip freeze`. This ensures\nreproducible builds across machines.\n\n## Error handling\nDon't catch bare `Exception`. Catch specific exceptions. Bare exceptions\nhide bugs and make debugging painful.", expected i64
+# Python Best Practices
+
+## Virtual environments
+Always use a virtual environment for Python projects. `python -m venv .venv`
+creates one in the current directory. Activate it before installing packages
+so dependencies don't pollute the system Python.
+
+## Type hints
+Type hints improve code clarity and catch bugs early. Use them on all
+function signatures. `from typing import Optional, List` covers

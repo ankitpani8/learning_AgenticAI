@@ -145,3 +145,62 @@ preserved deliberately for the next person (or future me) to learn from.
   Even when "heavy" and "light" both bind to qwen2.5:1.5b (because that's
   what fits in 7GB RAM), the indirection costs nothing at runtime and lets
   you change policy in one place when you move to a better machine.
+
+## Module 5 — Production Architecture
+
+- **Why is async worth the complexity premium?**
+  Almost everything an agent does is wait (LLM API, tools, vector store).
+  Async lets one process hold many concurrent waits. The single-request
+  latency is unchanged; throughput goes up 10-1000x. Complexity premium
+  is just keywords; the throughput gain is enormous.
+
+- **Why was my first load test slower concurrently than sequentially?**
+  Cache contamination across runs. The second phase measured the cache,
+  not the system. Fix: unique queries per phase + admin /cache/clear
+  endpoint between phases.
+
+- **Why was concurrent slower than sequential even after fixing the cache?**
+  Backend serialization. Ollama is a single Python process holding one
+  model in RAM; "parallel" requests queue inside Ollama. Async at the
+  Python layer can't fix a single-instance backend. Same lesson from
+  Module 3 about hierarchical dispatch on Ollama, restated at a different
+  layer.
+
+- **What's the difference between p50, p95, p99?**
+  Percentiles over response times. p50 is the median (typical user
+  experience). p95 is 1-in-20. p99 is 1-in-100, the tail. Production
+  SLOs target p95/p99 because the tail is what your worst-treated users
+  actually feel. Mean latency is misleading — one bad outlier drags
+  it up without changing user experience for most.
+
+- **Why three caching layers (exact, semantic, provider)?**
+  Different traffic patterns get caught by different layers. Exact handles
+  retries and repeated identical queries. Semantic handles paraphrases.
+  Provider-level prompt caching handles stable prefixes (system prompts,
+  tool definitions). All three compose; production systems often use all
+  three.
+
+- **What's the right way to handle different failure types in retry?**
+  Classify before retrying. Transient (5xx, timeout) -> exponential
+  backoff with jitter. Rate limit (429) -> wait the suggested delay.
+  Bad input (400, schema) -> fail fast, don't retry. Auth (401, 403) ->
+  fail fast, alert. Generic retry-everything loops waste latency budget
+  and amplify outages.
+
+- **Why does cache hit ratio matter so much in production?**
+  Caches don't just save tokens — they save tail latency, smooth out
+  rate-limit pressure, and absorb traffic spikes. 30-60% hit rate on an
+  FAQ-style agent is realistic and is a 30-60% cost reduction at zero
+  quality cost. Single highest-ROI production optimization.
+
+- **Why is the provider fallback chain a defense against more than runtime errors?**
+  Adding a garbage API key caused the startup health check to fail; the
+  chain bound to the next provider automatically. Fallback handles auth
+  misconfigurations, network blips, quota exhaustion, and rate limits
+  with the same mechanism.
+
+- **What's the agent / service distinction?**
+  An agent is the logic — graph, tools, prompts, state. A service is the
+  deployment shell — HTTP endpoints, auth, rate limiting, observability,
+  configuration. Production agents are agents plus services. Modules 1-4
+  built agents. Module 5 built the service shell around them.
