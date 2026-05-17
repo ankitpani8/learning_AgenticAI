@@ -48,7 +48,7 @@ toolkit with real depth, not buzzword-level familiarity.
 
 Get a free-tier Gemini API key at [aistudio.google.com](https://aistudio.google.com).
 Download Ollama at: [ollama.com](https://ollama.com/download).
-Anthropic is included in the provider chain at lower priority. To use Claude, set ANTHROPIC_API_KEY (~/.env) and either reorder ROLE_PREFERENCES to prefer it or run with Gemini disabled (~/lib/providers.py).
+Anthropic is included in the provider chain at lower priority. To use Claude, set ANTHROPIC_API_KEY (root/.env) and either reorder ROLE_PREFERENCES to prefer it or run with Gemini disabled (root/lib/providers.py).
 
 ## Repo Structure
 
