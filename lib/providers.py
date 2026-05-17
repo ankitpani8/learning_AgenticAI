@@ -50,8 +50,8 @@ load_dotenv(ENV_PATH)
 ROLE_PREFERENCES: dict[str, List[Tuple[str, str]]] = {
     # Strong synthesis / writing tasks.
     "heavy": [
-        ("gemini-2.5-flash-lite", "gemini"),
         ("gemini-2.5-flash", "gemini"),
+        ("gemini-2.5-flash-lite", "gemini"),
         ("qwen2.5:1.5b", "ollama"),
         # Documented option: Claude Sonnet for strong synthesis. Requires
         # paid API credit at console.anthropic.com (claude.ai subscription
@@ -62,9 +62,9 @@ ROLE_PREFERENCES: dict[str, List[Tuple[str, str]]] = {
     
     # Bounded reasoning: research, summarization, classification.
     "light": [
+        ("gemini-2.5-flash", "gemini"),
         ("qwen2.5:1.5b", "ollama"),
         ("gemini-2.5-flash-lite", "gemini"),
-        ("gemini-2.5-flash", "gemini"),
         ("claude-haiku-4-5", "anthropic"),
     ],
     # Critic / evaluator: structured output (find issues, return list).

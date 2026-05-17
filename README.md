@@ -31,8 +31,8 @@ toolkit with real depth, not buzzword-level familiarity.
 | **3. Multi-Agent** | CrewAI, LangGraph multi-agent, role-based selection | ✅ Complete |
 | **4. Memory & RAG** | Persistent state, vector retrieval, context engineering | ✅ Complete  |
 | **5. Production Architecture** | Async, streaming, caching, orchestration patterns | ✅ Complete |
-| **6. Observability & Eval** | Tracing, eval datasets, LLM-as-judge | 🚧 Ongoing |
-| **7. Governance & Guardrails** | Prompt injection, output validation, OWASP LLM Top 10 | ⏳ Planned |
+| **6. Observability & Eval** | Tracing, eval datasets, LLM-as-judge | ✅ Complete |
+| **7. Governance & Guardrails** | Prompt injection, output validation, OWASP LLM Top 10 | 🚧 Ongoing |
 | **8. Deployment & Capstone** | Docker, K8s, end-to-end production agent | ⏳ Planned |
 
 ---
@@ -100,6 +100,13 @@ learning_AgenticAI/
     ├── 04_agent.py             -- async RAG agent, token budget, cache integration
     ├── 05_service.py           -- FastAPI app with all endpoints + rate limiter
     ├── 06_load_test.py         -- concurrent load harness with cache clearing
+    └── README.md
+└── module6_observability_eval/
+    ├── 01_eval_dataset.py       -- 20 unlabeled + 10 labeled cases
+    ├── 02_metrics.py            -- four RAGAS metrics + deterministic citation check
+    ├── 03_test_harness.py       -- runs agent over dataset, aggregates scores
+    ├── 04_regression_test.py    -- baseline vs degraded-prompt comparison
+    ├── 05_ragas_comparison.py   -- RAGAS side-by-side runner
     └── README.md
 
 ```
@@ -314,6 +321,33 @@ the patterns that turn lab-grade code into something deployable.
 
 See [`module5_production/README.md`](module5_production/README.md) for
 the architecture and findings.
+
+## Module 6 — Observability and Evaluation
+
+**Goal:** Make the agents from previous modules *measurable*. Add tracing
+so we can see what they're doing; add an evaluation harness so we know how
+well they're doing.
+
+### What's inside
+- LangSmith integration (zero-code, env-var-only) across the whole repo
+- Eval dataset: 20 unlabeled + 10 labeled cases covering the Module 4 KB
+- Four RAGAS-equivalent metrics implemented manually:
+  faithfulness, answer relevance, context precision, context recall
+- Fifth deterministic metric: source citation check
+- Regression test: degrade a prompt, watch metrics drop
+- RAGAS side-by-side comparison setup
+
+### Key concepts demonstrated
+- Trace as the right primitive for agent debugging (not logs)
+- LLM-as-judge biases and their mitigations
+- The eval feedback loop (production failure → regression test)
+- Why deterministic metrics beat LLM-judges when properties are checkable
+- Out-of-knowledge cases as first-class eval data
+- The eval harness as the durable value; specific scores are domain-tunable
+
+See [`module6_observability_eval/README.md`](module6_observability_eval/README.md)
+for the metrics implementation and findings.
+
 
 ## Notes for Visitors
 

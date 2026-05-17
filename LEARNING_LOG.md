@@ -204,3 +204,67 @@ preserved deliberately for the next person (or future me) to learn from.
   deployment shell — HTTP endpoints, auth, rate limiting, observability,
   configuration. Production agents are agents plus services. Modules 1-4
   built agents. Module 5 built the service shell around them.
+
+## Module 6 — Observability and Evaluation
+
+- **Why is tracing the right primitive for agent debugging, not logging?**
+  Agents are trees of nested calls (manager → workers → tools → retrievals).
+  Logging gives fragments; tracing gives the full causal chain with timing
+  and metadata. You see at a glance which step took longest, which errored,
+  what data flowed between them.
+
+- **How do I know my agent isn't silently regressing?**
+  Eval harness against a curated dataset. Run before and after each change.
+  Without one, prompt tweaks can degrade 30% of queries silently — you'd
+  never know until users complain.
+
+- **How small can an eval dataset be and still be useful?**
+  20 cases catches 30%+ regressions. 100 catches 10%. 500+ for serious
+  production use. The interesting cases (production failures you've
+  actually hit) are worth more than dataset size suggests.
+
+- **What's the difference between faithfulness and relevance?**
+  Faithfulness: is the answer supported by retrieved context? (Catches
+  hallucination.) Relevance: does the answer address the question?
+  (Catches off-topic responses.) An answer can be faithful but irrelevant,
+  or relevant but unfaithful. You need both.
+
+- **What does LLM-as-judge get wrong, and how do you mitigate?**
+  Position bias (prefers first answer in pairs) — randomize order.
+  Self-preference (model favors its own outputs) — use a different model
+  class as judge. Verbosity bias (prefers longer answers) — explicit
+  rubrics that reward conciseness. Calibration drift (same prompt scores
+  differently across runs) — trust trends, not points.
+
+- **When should I use a deterministic metric vs an LLM-judge?**
+  Always deterministic if the property is checkable. "Does the answer
+  cite a source?" is a string check, not a judgment call. LLM-judges only
+  for things like faithfulness and relevance that genuinely need reasoning.
+
+- **Why use a 'light' role for the judge when agents use 'heavy'?**
+  Two reasons. First, judge tasks are bounded (output a score + reason) —
+  same logic as critics in Module 3. Second, using a different model
+  class than the generator mitigates self-preference bias. Production
+  systems often go further: use one provider for generation, another
+  for judging.
+
+- **What did the regression test prove that vibes-based testing can't?**
+  Replacing the agent's system prompt with one that says "use general
+  knowledge freely, don't say 'I don't know'" measurably dropped
+  faithfulness scores. Without the harness, the change would have looked
+  fine on a handful of demo queries. The harness caught what eyeballing
+  couldn't.
+
+- **What's the production eval feedback loop?**
+  Build agent → measure baseline → make change → re-measure → ship if
+  better, rollback if worse. Find a failure case in production → add to
+  eval dataset → repeat. Over time the dataset becomes a regression test
+  for every failure you've ever hit. Future changes can't silently re-break
+  them. This is what separates teams shipping reliable AI from teams
+  shipping demos.
+
+- **Why didn't we just use RAGAS from the start?**
+  RAGAS gives you a number. Building manually first gives you understanding —
+  what each metric measures, how the rubrics affect scores, where the
+  judge biases live. Production teams modify RAGAS prompts to fit their
+  domain. You can only modify what you understand.
